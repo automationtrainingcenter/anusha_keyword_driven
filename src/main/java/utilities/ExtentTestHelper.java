@@ -13,7 +13,7 @@ public class ExtentTestHelper {
     // create html report by initializing required classes
     public static void createReport(){
         reports = new ExtentReports();
-        reporter = new ExtentSparkReporter("");
+        reporter = new ExtentSparkReporter(DriverConfig.getFilePath("reports", "report.html"));
         reports.attachReporter(reporter);
     }
 

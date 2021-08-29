@@ -7,19 +7,17 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.io.FileHandler;
 import org.openqa.selenium.support.ui.Select;
-import sun.java2d.pipe.OutlineTextRenderer;
 
 import java.io.File;
 import java.util.List;
-import java.util.Optional;
 
 public class BrowserHelper {
 
     static WebDriver driver;
 
-    public static WebDriver launchBrowser(BrowserName browserName, String url) {
-        // start extent reports
-        ExtentTestHelper.createReport();
+    public static WebDriver launchBrowser(String locType, String locValue, String elementName, String testData) {
+        BrowserName browserName = BrowserName.valueOf(elementName.toUpperCase());
+        String url = testData;
 
         DriverConfig.setDriverPath(browserName);
         switch (browserName){
@@ -39,18 +37,17 @@ public class BrowserHelper {
     }
 
 
-    public static void sleep(long millis) {
+    public static void sleep(String locType, String locValue, String elementName, String testData) {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(Long.parseLong(testData));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
 
-    public static void closeBrowser(){
+    public static void closeBrowser(String locType, String locValue, String elementName, String testData){
         if(driver != null) {
-            ExtentTestHelper.saveReport();
             driver.quit();
         } else {
             throw new RuntimeException("driver is null.");
@@ -58,52 +55,54 @@ public class BrowserHelper {
     }
 
     // click on an element
-    public static void click(By locator, String eleName) {
+    public static void click(String locType, String locValue, String elementName, String testData) {
         try {
+            By locator = LocatorHelper.locate(locType, locValue);
             driver.findElement(locator).click();
-            ExtentTestHelper.info(String.format("clicked on element %s", eleName));
+            ExtentTestHelper.info(String.format("clicked on element %s", elementName));
         } catch (Exception e) {
-           ExtentTestHelper.fail(String.format("clicking on element %s failed due to exception "+e, eleName));
+           ExtentTestHelper.fail(String.format("clicking on element %s failed due to exception "+e, elementName));
             System.out.println();
         }
     }
 
     // locate an element
-    public static WebElement getElement(By locator, String eleName){
+    public static WebElement getElement(String locType, String locValue, String elementName, String testData){
         try {
+            By locator = LocatorHelper.locate(locType, locValue);
             WebElement element = driver.findElement(locator);
-            ExtentTestHelper.info(String.format("element %s located successfully", eleName));
             return element;
         } catch (Exception e) {
-            ExtentTestHelper.fail("locating element "+eleName+"  is failed due to exception "+e);
+            ExtentTestHelper.fail("locating element "+elementName+"  is failed due to exception "+e);
         }
         return null;
     }
 
     // enter text
-    public static void enterText(By locator, String text, String elementName){
+    public static void enterText(String locType, String locValue, String elementName, String testData){
         try {
-            getElement(locator, elementName).sendKeys(text);
+            getElement(locType, locValue, elementName, testData).sendKeys(testData);
+            ExtentTestHelper.info(String.format("Entered text '%s' in element %s  successfully", testData, elementName));
         } catch (Exception e) {
-            ExtentTestHelper.fail(String.format("Failed enter text '%s' in element '%s' due to exception "+e, text, elementName));
+            ExtentTestHelper.fail(String.format("Failed enter text '%s' in element '%s' due to exception "+e, testData, elementName));
         }
     }
 
     // select an option of drop down
-    public static void selectOption(By locator, String option, String eleName){
+    public static void selectOption(String locType, String locValue, String elementName, String testData){
         try {
-            Select select = new Select(getElement(locator, eleName));
+            Select select = new Select(getElement(locType, locValue, elementName, testData));
             List<WebElement> options = select.getOptions();
-            String first = options.stream().map(WebElement::getText).filter(optionText -> optionText.equalsIgnoreCase(option)).findFirst().toString();
+            String first = options.stream().map(WebElement::getText).filter(optionText -> optionText.equalsIgnoreCase(testData)).findFirst().toString();
             select.selectByVisibleText(first);
-            ExtentTestHelper.info(String.format("Option '%s' selected successfully from drop down '%s'", option, eleName));
+            ExtentTestHelper.info(String.format("Option '%s' selected successfully from drop down '%s'", testData, elementName));
         } catch (Exception e){
-            ExtentTestHelper.fail(String.format("Failed to select option '%s' from drop down '%s' due to exception "+e, option, eleName ));
+            ExtentTestHelper.fail(String.format("Failed to select option '%s' from drop down '%s' due to exception "+e, testData, elementName ));
         }
     }
 
     // accept alert
-    public static String acceptAlert(){
+    public static String acceptAlert(String locType, String locValue, String elementName, String testData){
         try {
             Alert alert = driver.switchTo().alert();
             String text = alert.getText();
@@ -117,38 +116,35 @@ public class BrowserHelper {
     }
 
     // mouse hover event
-    public static void mouseHoverToElement(By locator, String element) {
+    public static void mouseHoverToElement(String locType, String locValue, String elementName, String testData) {
         try {
-            WebElement ele = getElement(locator, element);
+            WebElement ele = getElement(locType, locValue, elementName, testData);
             Actions actions = new Actions(driver);
             actions.moveToElement(ele).build().perform();
-            ExtentTestHelper.info("Mouse hover to "+element);
+            ExtentTestHelper.info("Mouse hover to "+elementName);
         } catch (Exception e) {
-            ExtentTestHelper.fail(String.format("mouse hover on to the element %s failed due to exception "+e, element));
+            ExtentTestHelper.fail(String.format("mouse hover on to the element %s failed due to exception "+e, elementName));
         }
     }
 
     // take screenshot
-    public static void attachScreenshotToReport(String titleImage){
+    public static void attachScreenshotToReport(String locType, String locValue, String elementName, String testData){
         try {
             TakesScreenshot ts = (TakesScreenshot) driver;
             String screenshotAs = ts.getScreenshotAs(OutputType.BASE64);
-            ExtentTestHelper.getTest().addScreenCaptureFromBase64String(screenshotAs, titleImage);
+            ExtentTestHelper.getTest().addScreenCaptureFromBase64String(screenshotAs, testData);
         } catch (WebDriverException e) {
            ExtentTestHelper.fail("Failed to capture the screenshot due to exception "+e);
         }
     }
 
-    private static String getFilePath(String folderName, String fileName){
-        return new File(DriverConfig.getFolderPath(folderName)+fileName).getAbsolutePath();
-    }
 
-    public static void getScreenShotAsFile(String fileName){
+    public static void getScreenShotAsFile(String locType, String locValue, String elementName, String testData){
         try {
             TakesScreenshot ts = (TakesScreenshot) driver;
             File screenshotAs = ts.getScreenshotAs(OutputType.FILE);
-            FileHandler.copy(screenshotAs, new File(DriverConfig.getFolderPath("screenshots")+fileName));
-            ExtentTestHelper.getTest().addScreenCaptureFromPath(getFilePath("screenshot", fileName));
+            FileHandler.copy(screenshotAs, new File(DriverConfig.getFolderPath("screenshots")+testData));
+            ExtentTestHelper.getTest().addScreenCaptureFromPath(DriverConfig.getFilePath("screenshot", testData));
         } catch (Exception e) {
             ExtentTestHelper.fail("Failed to capture the screenshot due to exception "+e);
         }

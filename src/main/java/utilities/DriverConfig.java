@@ -12,6 +12,11 @@ public class DriverConfig {
         return builder.append(File.separator).append(folderName).append(File.separator).toString();
     }
 
+    public static String getFilePath(String folderName, String fileName){
+        return new File(DriverConfig.getFolderPath(folderName)+fileName).getAbsolutePath();
+    }
+
+
     private static String getDriverName(String driverName){
         String osName = System.getProperty("os.name");
         if(osName.toLowerCase().contains("win")){
